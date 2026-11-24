@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Centros más cercanos · Barcelona</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--ink:#1b1f27;--muted:#6a7280;--line:#e2e5ea;--brand:#d3001c;--soft:#fde8eb;--ok:#0f8a4b;--okb:#e3f6ec}
+@media(prefers-color-scheme:dark){:root{--bg:#12141a;--card:#1b1f27;--ink:#eceef3;--muted:#98a0ae;--line:#2d333f;--brand:#ff3b52;--soft:#3a1a20;--ok:#3ccf85;--okb:#12301f}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:22px 16px 60px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--muted);font-size:14px}
+.search{display:flex;gap:8px;margin:16px 0 8px}
+input{flex:1;min-width:0;font:inherit;color:inherit;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:13px 14px}
+input:focus{outline:0;border-color:var(--brand)}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:0 20px;background:var(--brand);color:#fff;cursor:pointer}
+#sug{position:absolute;left:0;right:0;top:100%;margin-top:-4px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:10;overflow:hidden;display:none}
+#sug div{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--line)}
+#sug div:last-child{border:0}
+#sug div:hover,#sug div.on{background:var(--soft)}
+#sug small{color:var(--muted);margin-left:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.chips button{background:var(--card);color:var(--ink);border:1px solid var(--line);padding:5px 11px;border-radius:99px;font-weight:600;font-size:13px}
+.chips button:hover{border-color:var(--brand);color:var(--brand)}
+.res h2{font-size:15px;margin:0 0 10px;color:var(--muted);font-weight:600}
+.c{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:center}
+.c.first{border-color:var(--ok);background:linear-gradient(var(--okb),var(--card) 70px)}
+.c b{font-size:17px}.min{font-size:26px;font-weight:800;text-align:right;line-height:1}
+.min small{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-top:3px}
+.emp{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.emp span{background:var(--soft);color:var(--brand);border-radius:99px;font-size:12px;font-weight:700;padding:1px 9px}
+.meta{grid-column:1/-1;font-size:13px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.meta a{color:var(--brand)}
+.badge{font-size:11px;background:var(--ok);color:#fff;border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:2px}
+.note{font-size:12.5px;color:var(--muted);margin-top:16px}
+.err{color:var(--brand);font-weight:600}
+</style>
+</head>
+<body><div class="wrap">
+<h1>📍 Centros de trabajo más cercanos</h1>
+<div class="sub">Escribe el barrio, ciudad o pueblo donde vive el candidato (Barcelona y alrededores).</div>
+<div style="position:relative"><form class="search" id="f"><input id="q" placeholder="Ej. Sant Andreu, Badalona, Sabadell…" autocomplete="off" autofocus><button>Buscar</button></form><div id="sug"></div></div>
+<div class="chips" id="chips"></div>
+<div class="res" id="res"></div>
+<div class="note">🚗 Minutos en coche sin tráfico (ruta real de OpenStreetMap). «~» = estimación si no hay conexión. Ubicación de los centros aproximada. No se guarda ningún dato.</div>
+</div>
+<script>
+const CENTROS=[
+ {id:"DCT7",nombre:"DCT7 · Montcada i Reixac",loc:"Montcada i Reixac",lat:41.4905,lng:2.1895,emp:["NOPAR"],
+  det:{NOPAR:{jornada:"38 h semanales",salario:"10,12 €/h brutos + bono asistencia (≈1.660 €/mes)",contrato:"Fijo-discontinuo",horario:"Rutas 10-11h hasta 18-19h (8 h)",listas:"Los martes",
+   req:["2 años de antigüedad de carné","Mínimo 21 años","8 puntos en el carné","Carné homologado en España","Disponibilidad L-D con 2 días de descanso rotativos","Furgoneta facilitada por la empresa"]}}},
+ {id:"VCN1",nombre:"VCN1 · Montcada i Reixac",loc:"Montcada i Reixac",lat:41.4840,lng:2.1850,emp:["INSTAPACK"],
+  det:{INSTAPACK:{jornada:"38 h (o parcial 20/30 h)",salario:"9,85 €/h brutos (≈1.418 €/mes)",contrato:"Fijo-discontinuo · 3 meses ampliables según producción",horario:"10-11h a 18-19h (38 h) · Tarde 18-19h a 22-23h (20 h)",listas:"En cuanto haya 2-3 candidatos (cada ~2 días)",
+   req:["1 año de antigüedad de carné (físico, no provisional)","8 puntos","Teléfono con internet","Disponibilidad L-D con 2 descansos rotativos","Formación presencial 1 día remunerada (si supera el mes)"]}}},
+ {id:"DCZ4",nombre:"DCZ4 · Mollet del Vallès",loc:"Mollet del Vallès",lat:41.5395,lng:2.2135,emp:["NOPAR"],
+  det:{NOPAR:{jornada:"38 h semanales",salario:"10,12 €/h brutos + bono asistencia",contrato:"Fijo-discontinuo",horario:"Rutas 10-11h hasta 18-19h",listas:"Los martes",
+   req:["2 años de antigüedad de carné","Mínimo 21 años","8 puntos","Carné homologado en España","Disponibilidad L-D con 2 descansos rotativos"]}}},
+ {id:"BCN1",nombre:"BCN1 · El Prat de Llobregat",loc:"El Prat de Llobregat",lat:41.3290,lng:2.0960,emp:["INSTAPACK"],
+  det:{INSTAPACK:{jornada:"38 h o parcial 20 h",salario:"9,85 €/h brutos (≈1.418 €/mes)",contrato:"Fijo-discontinuo · 3 meses ampliables",horario:"Mañana 7-8h a 11-12h o tarde 18-19h a 22-23h (20 h) · 10-11h a 18-19h (38 h)",listas:"Los jueves (contratación el lunes siguiente)",
+   req:["1 año de antigüedad de carné (físico)","8 puntos","Teléfono con internet","Disponibilidad L-D con 2 descansos rotativos"]}}},
+ {id:"VES2",nombre:"VES2 · El Prat de Llobregat",loc:"El Prat de Llobregat",lat:41.3225,lng:2.0870,emp:["WINIW"],
+  det:{WINIW:{jornada:"36 h semanales",salario:"9,85 €/h brutos (≈1.418 €/mes)",contrato:"Fijo-discontinuo · mensual renovable (hasta 31 dic.)",horario:"Turnos rotativos mañana/tarde cada 1-2 semanas",listas:"Los lunes antes de las 15:00 h",
+   req:["2 meses de antigüedad de carné (físico)","8 puntos","Disponibilidad L-D con 2 descansos rotativos","Incorporación en 1-2 semanas","Formación online no remunerada"]}}},
+ {id:"DCT9",nombre:"DCT9 · Verneda (Sant Martí)",loc:"Barcelona · La Verneda",lat:41.4225,lng:2.2040,emp:["INSTAPACK","WINIW"],
+  det:{INSTAPACK:{jornada:"38 h semanales",salario:"9,85 €/h brutos (≈1.418 €/mes)",contrato:"Fijo-discontinuo · 3 meses ampliables",horario:"10-11h a 18-19h",listas:"Los jueves (contratación el lunes siguiente)",
+   req:["1 año de antigüedad de carné","8 puntos","Teléfono con internet","Disponibilidad L-D con 2 descansos rotativos"]},
+   WINIW:{jornada:"36 h semanales",salario:"9,85 €/h brutos",contrato:"Fijo-discontinuo · mensual renovable",horario:"10-11h a 18-19h · Furgoneta o andarín (≤1 km con carrito)",listas:"Los lunes antes de las 15:00 h",
+   req:["2 meses de antigüedad de carné (físico)","8 puntos","Disponibilidad L-D con 2 descansos rotativos","Incorporación en 1-2 semanas"]}}},
+ {id:"UES4",nombre:"UES4 · Zona Franca",loc:"Barcelona · Zona Franca",lat:41.3500,lng:2.1400,emp:["INSTAPACK"],
+  det:{INSTAPACK:{jornada:"38 h o parcial 20/30 h",salario:"9,85 €/h brutos",contrato:"Fijo-discontinuo · 3 meses ampliables",horario:"Mañana 9-15h o tarde 17-23h (rotativo) · 7-8h a 11-12h (20 h)",listas:"En cuanto haya 2-3 candidatos (cada ~2 días)",
+   req:["Reparto de productos alimentarios","1 año de antigüedad de carné","8 puntos","Teléfono con internet","Disponibilidad L-D con 2 descansos rotativos"]}}},
+ {id:"DCT4",nombre:"DCT4 · Rubí",loc:"Rubí",lat:41.4930,lng:2.0330,emp:["WINIW"],
+  det:{WINIW:{jornada:"36 h semanales",salario:"9,85 €/h brutos (≈1.418 €/mes)",contrato:"Fijo-discontinuo · mensual renovable (hasta 31 dic.)",horario:"10-11h a 18-19h",listas:"Los lunes antes de las 15:00 h",
+   req:["2 meses de antigüedad de carné (físico)","8 puntos","Disponibilidad L-D con 2 descansos rotativos","Incorporación en 1-2 semanas"]}}}
+];
+/* Poblaciones (lat, lng aprox.) para localizar sin conexión */
+const POB={"Barcelona":[41.3874,2.1686],"Barcelona · La Verneda":[41.4225,2.2040],"Barcelona · Sant Martí":[41.4120,2.2050],"Barcelona · Sant Andreu":[41.4350,2.1900],"Barcelona · Nou Barris":[41.4430,2.1770],"Barcelona · Horta-Guinardó":[41.4290,2.1650],"Barcelona · Gràcia":[41.4030,2.1560],"Barcelona · Eixample":[41.3900,2.1620],"Barcelona · Les Corts":[41.3880,2.1300],"Barcelona · Sants":[41.3750,2.1350],"Barcelona · Sarrià-Sant Gervasi":[41.4000,2.1200],"Barcelona · Poblenou":[41.4030,2.2000],"Barcelona · Zona Franca":[41.3500,2.1400],
+"L'Hospitalet de Llobregat":[41.3596,2.0997],"El Prat de Llobregat":[41.3277,2.0950],"Cornellà de Llobregat":[41.3500,2.0700],"Sant Joan Despí":[41.3680,2.0580],"Esplugues de Llobregat":[41.3770,2.0880],"Sant Just Desvern":[41.3830,2.0780],"Sant Feliu de Llobregat":[41.3830,2.0460],"Viladecans":[41.3140,2.0140],"Gavà":[41.3060,2.0010],"Castelldefels":[41.2800,1.9770],"Sant Boi de Llobregat":[41.3440,2.0360],"Molins de Rei":[41.4140,2.0170],"Sant Vicenç dels Horts":[41.3930,2.0090],"Pallejà":[41.4230,1.9930],"Sant Andreu de la Barca":[41.4460,1.9710],"Martorell":[41.4740,1.9300],"Abrera":[41.5160,1.9020],"Olesa de Montserrat":[41.5400,1.8930],"Esparreguera":[41.5370,1.8670],"Cervelló":[41.3970,1.9680],"Santa Coloma de Cervelló":[41.3680,1.9420],"Corbera de Llobregat":[41.4170,1.9280],"Vallirana":[41.3860,1.9330],"Begues":[41.3270,1.9360],"Sant Climent de Llobregat":[41.3350,1.9900],
+"Santa Coloma de Gramenet":[41.4510,2.2080],"Badalona":[41.4500,2.2470],"Sant Adrià de Besòs":[41.4300,2.2190],"Tiana":[41.4780,2.2610],"Montgat":[41.4650,2.2820],"El Masnou":[41.4810,2.3170],"Alella":[41.4930,2.2960],"Premià de Mar":[41.4900,2.3600],"Vilassar de Mar":[41.5070,2.3920],"Mataró":[41.5380,2.4450],
+"Montcada i Reixac":[41.4850,2.1880],"Ripollet":[41.4970,2.1590],"Cerdanyola del Vallès":[41.4910,2.1400],"Barberà del Vallès":[41.5190,2.1250],"Badia del Vallès":[41.5000,2.1100],"Sabadell":[41.5430,2.1090],"Terrassa":[41.5630,2.0080],"Rubí":[41.4930,2.0330],"Sant Cugat del Vallès":[41.4720,2.0860],"Sant Quirze del Vallès":[41.5300,2.0830],"Castellar del Vallès":[41.6160,2.0870],"Sentmenat":[41.6030,2.1300],"Mollet del Vallès":[41.5400,2.2140],"Santa Perpètua de Mogoda":[41.5390,2.1810],"Polinyà":[41.5460,2.1670],"Palau-solità i Plegamans":[41.5970,2.1810],"La Llagosta":[41.5170,2.1940],"Martorelles":[41.5010,2.2410],"Sant Fost de Campsentelles":[41.5100,2.2130],"Montornès del Vallès":[41.5380,2.2500],"Montmeló":[41.5520,2.2480],"Parets del Vallès":[41.5740,2.2340],"Lliçà d'Amunt":[41.5970,2.2330],"Granollers":[41.6080,2.2870],"Canovelles":[41.6150,2.2740],"Les Franqueses del Vallès":[41.6290,2.3010],"Caldes de Montbui":[41.6310,2.1670],"Cardedeu":[41.6400,2.3580],"Vilanova del Vallès":[41.5640,2.3000],
+"Sant Sadurní d'Anoia":[41.4260,1.7860],"Gelida":[41.4380,1.8630],"Piera":[41.5230,1.7490],"Vilafranca del Penedès":[41.3450,1.6990],"Sitges":[41.2370,1.8050],"Vilanova i la Geltrú":[41.2240,1.7260],"Sant Pere de Ribes":[41.2570,1.7700],"Igualada":[41.5790,1.6170],"Manresa":[41.7270,1.8260]};
+const norm=s=>(s||"").toString().normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+const POBN={}; Object.keys(POB).forEach(k=>POBN[norm(k)]=k);
+const ALIAS={"hospitalet":"L'Hospitalet de Llobregat","l hospitalet":"L'Hospitalet de Llobregat","prat":"El Prat de Llobregat","el prat":"El Prat de Llobregat","moncada y reixach":"Montcada i Reixac","montcada":"Montcada i Reixac","moncada":"Montcada i Reixac","mollet":"Mollet del Vallès","verneda":"Barcelona · La Verneda","zona franca":"Barcelona · Zona Franca","sant cugat":"Sant Cugat del Vallès","sant boi":"Sant Boi de Llobregat","cornella":"Cornellà de Llobregat","sant feliu":"Sant Feliu de Llobregat","santa coloma":"Santa Coloma de Gramenet","sant adria":"Sant Adrià de Besòs","viladecans":"Viladecans","vilafranca":"Vilafranca del Penedès","vilanova":"Vilanova i la Geltrú","cerdanyola":"Cerdanyola del Vallès","barbera":"Barberà del Vallès","sant quirze":"Sant Quirze del Vallès","les franqueses":"Les Franqueses del Vallès"};
+Object.keys(ALIAS).forEach(k=>POBN[k]=ALIAS[k]);
+
+
+Object.keys(POB).forEach(k=>{if(k.startsWith("Barcelona · "))POBN[norm(k.slice(12))]=k});
+const ALIAS2={"hospitalet":"L'Hospitalet de Llobregat","prat":"El Prat de Llobregat","moncada y reixach":"Montcada i Reixac","montcada":"Montcada i Reixac","mollet":"Mollet del Vallès","verneda":"Barcelona · La Verneda","sant cugat":"Sant Cugat del Vallès","sant boi":"Sant Boi de Llobregat","cornella":"Cornellà de Llobregat","sant feliu":"Sant Feliu de Llobregat","santa coloma":"Santa Coloma de Gramenet","sant adria":"Sant Adrià de Besòs","vilafranca":"Vilafranca del Penedès","vilanova":"Vilanova i la Geltrú","cerdanyola":"Cerdanyola del Vallès","barbera":"Barberà del Vallès","sant quirze":"Sant Quirze del Vallès","les franqueses":"Les Franqueses del Vallès","sant andreu":"Barcelona · Sant Andreu","nou barris":"Barcelona · Nou Barris","horta":"Barcelona · Horta-Guinardó","gracia":"Barcelona · Gràcia","sarria":"Barcelona · Sarrià-Sant Gervasi","sant marti":"Barcelona · Sant Martí","poblenou":"Barcelona · Poblenou","sants":"Barcelona · Sants","les corts":"Barcelona · Les Corts","eixample":"Barcelona · Eixample"};
+Object.keys(ALIAS2).forEach(k=>POBN[k]=ALIAS2[k]);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function km(a,b){const R=6371,r=x=>x*Math.PI/180,A=r(b[0]-a[0]),B=r(b[1]-a[1]);const h=Math.sin(A/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(B/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+function findPob(q){const n=norm(q);if(!n)return null;let k=POBN[n]?n:Object.keys(POBN).find(x=>x.startsWith(n))||Object.keys(POBN).find(x=>x.includes(n));return k?{name:POBN[k],ll:POB[POBN[k]]}:null}
+const VB="1.3,42.4,2.7,41.15";
+async function remote(q,n){try{const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit="+n+"&countrycodes=es&bounded=1&viewbox="+VB+"&q="+encodeURIComponent(q));
+  return (await r.json()).map(x=>({name:x.display_name.split(",").slice(0,2).map(t=>t.trim()).join(", "),ll:[+x.lat,+x.lon]}))}catch(e){return[]}}
+async function geocode(q){
+  const n=norm(q);if(POBN[n])return{name:POBN[n],ll:POB[POBN[n]]};
+  const r=await remote(q,1);if(r[0])return r[0];
+  return findPob(q)}
+function localMatches(q){const n=norm(q),out=[],seen=new Set();
+  for(const k of Object.keys(POBN)){if(k.startsWith(n)||k.split(" ").some(w=>w.startsWith(n))){const nm=POBN[k];if(!seen.has(nm)){seen.add(nm);out.push({name:nm,ll:POB[nm]})}}}
+  return out.slice(0,5)}
+const est=(ll,c)=>Math.max(3,Math.round(km(ll,[c.lat,c.lng])*1.3/45*60));
+const fm=(m,e)=>(e?"~":"")+(m>=60?Math.floor(m/60)+" h "+m%60+" min":m+" min");
+async function route(ll){
+  const cs=CENTROS;const coords=[ll,...cs.map(c=>[c.lat,c.lng])].map(x=>x[1]+","+x[0]).join(";");
+  try{const r=await fetch(`https://router.project-osrm.org/table/v1/driving/${coords}?sources=0&destinations=${cs.map((_,i)=>i+1).join(";")}&annotations=duration,distance`);
+    const j=await r.json();if(j.code!=="Ok")throw 0;
+    return cs.map((c,i)=>({c,m:Math.max(1,Math.round(j.durations[0][i]/60)),k:Math.round(j.distances[0][i]/100)/10,e:false}))}
+  catch(e){return cs.map(c=>({c,m:est(ll,c),k:Math.round(km(ll,[c.lat,c.lng])*13)/10,e:true}))}}
+function draw(name,rows,ll){
+  rows.sort((a,b)=>a.m-b.m);
+  $("#res").innerHTML=`<h2>Desde <b>${esc(name)}</b> · ordenados por tiempo</h2>`+rows.map((x,i)=>{
+    const c=x.c,lis=[...new Set(c.emp.map(e=>c.det[e].listas))].join(" / ");
+    return`<div class="c ${i?"":"first"}"><div><b>${esc(c.nombre)}</b>${i?"":'<span class="badge">MÁS CERCANO</span>'}
+    <div class="emp">${c.emp.map(e=>`<span>${e}</span>`).join("")}</div></div>
+    <div class="min">🚗 ${fm(x.m,x.e)}<small>${x.k} km${x.e?" (aprox.)":""}</small></div>
+    <div class="meta"><span>📅 Listas: ${esc(c.emp.map(e=>e+": "+c.det[e].listas).join(" · "))}</span>
+    <a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&origin=${ll[0]},${ll[1]}&destination=${c.lat},${c.lng}&travelmode=transit">Ruta en transporte público ↗</a></div></div>`}).join("")}
+let seq=0;
+async function go(q,pre){
+  q=q.trim();if(!q)return;const my=++seq;$("#sug").style.display="none";$("#res").innerHTML='<div class="sub">Buscando…</div>';
+  const g=pre||await geocode(q);if(my!==seq)return;
+  if(!g){$("#res").innerHTML='<div class="err">No encuentro esa zona. Prueba con el nombre del barrio o municipio.</div>';return}
+  const base=CENTROS.map(c=>({c,m:est(g.ll,c),k:Math.round(km(g.ll,[c.lat,c.lng])*13)/10,e:true}));
+  draw(g.name,base,g.ll);
+  const real=await route(g.ll);if(my===seq)draw(g.name,real,g.ll)}
+$("#f").onsubmit=e=>{e.preventDefault();go($("#q").value)};
+let sugT,sugSeq=0,sugList=[];
+function showSug(l){sugList=l;const e=$("#sug");e.style.display=l.length?"block":"none";e.innerHTML=l.map((x,i)=>`<div data-i="${i}">${esc(x.name)}</div>`).join("")}
+$("#q").addEventListener("input",()=>{clearTimeout(sugT);const q=$("#q").value.trim();if(q.length<2){showSug([]);return}
+  const loc=localMatches(q);showSug(loc);const my=++sugSeq;
+  sugT=setTimeout(async()=>{const r=await remote(q,6);if(my!==sugSeq)return;const seen=new Set(loc.map(x=>norm(x.name)));
+    showSug(loc.concat(r.filter(x=>!seen.has(norm(x.name)))).slice(0,8))},450)});
+$("#sug").onclick=e=>{const d=e.target.closest("[data-i]");if(!d)return;const x=sugList[+d.dataset.i];$("#q").value=x.name.replace("Barcelona · ","");go(x.name,x)};
+document.addEventListener("click",e=>{if(!e.target.closest("#sug,#q"))$("#sug").style.display="none"});
+$("#chips").innerHTML=["Sant Andreu","Nou Barris","Sants","L'Hospitalet de Llobregat","Badalona","Santa Coloma de Gramenet","Sabadell","Terrassa","Granollers","Viladecans"].map(x=>`<button type="button">${x}</button>`).join("");
+$("#chips").onclick=e=>{if(e.target.tagName==="BUTTON"){$("#q").value=e.target.textContent;go(e.target.textContent)}};
+</script>
+</body></html>
